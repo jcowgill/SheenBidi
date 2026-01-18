@@ -114,6 +114,7 @@ sheenbidi = library(
   sources: [sheenbidi_headers, internal_headers, sheenbidi_sources],
   c_args: dll_mode ? ['-DSB_CONFIG_DLL_EXPORT'] : [],
   include_directories: ['Headers', 'Source'],
+  gnu_symbol_visibility: 'hidden',
   version: project_version,
   soversion: soversion,
   install: true
@@ -291,8 +292,9 @@ if build_tests
     test_exe = executable(
       test_name,
       sources: test_common_files + test_files,
+      objects: sheenbidi.extract_all_objects(recursive: true),
       include_directories: ['Headers', 'Tools'],
-      dependencies: [parser_dep, sheenbidi_dep],
+      dependencies: [parser_dep],
       cpp_args: ['-DSTANDALONE_TESTING'],
       install: false
     )
