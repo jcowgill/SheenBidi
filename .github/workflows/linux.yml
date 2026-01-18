@@ -85,13 +85,6 @@ jobs:
           lcov --capture --directory . --output-file coverage.info
           lcov --remove coverage.info '/usr/*' 'Tests/*' 'Tools/*' --output-file coverage.info
 
-      - name: Upload Code Coverage
-        if: matrix.coverage
-        uses: coverallsapp/github-action@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: coverage.info
-
   meson:
     name: Meson - ${{ matrix.name }}
     runs-on: ubuntu-latest
