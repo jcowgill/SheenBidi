@@ -118,6 +118,7 @@ set_target_properties(SheenBidi PROPERTIES
   VERSION ${PROJECT_VERSION}
   SOVERSION ${PROJECT_VERSION_MAJOR}
   PUBLIC_HEADER "${SHEENBIDI_HEADERS}"
+  C_VISIBILITY_PRESET "hidden"
 )
 add_library(SheenBidi::SheenBidi ALIAS SheenBidi)
 add_sanitizers(SheenBidi)
@@ -248,10 +249,22 @@ if(BUILD_TESTS)
     Tests/ThreadLocalStorageTests.cpp
   )
 
+  set(COVERAGE_OPTIONS "")
+  if(ENABLE_COVERAGE)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+      message(WARNING "Code coverage is not supported with MSVC")
+    else()
+      set(COVERAGE_OPTIONS --coverage -fprofile-update=atomic)
+    endif()
+  endif()
+  target_compile_options(SheenBidi PUBLIC ${COVERAGE_OPTIONS})
+  target_link_options(SheenBidi PUBLIC ${COVERAGE_OPTIONS})
+
   foreach(TEST_NAME IN LISTS TEST_TARGETS)
     add_executable(${TEST_NAME}
       ${${TEST_NAME}}
       ${TEST_COMMON_FILES}
+      $<TARGET_OBJECTS:SheenBidi>
     )
     target_include_directories(${TEST_NAME}
       PRIVATE
@@ -260,7 +273,9 @@ if(BUILD_TESTS)
         ${CMAKE_CURRENT_SOURCE_DIR}/Tools
     )
     target_compile_definitions(${TEST_NAME} PRIVATE STANDALONE_TESTING)
-    target_link_libraries(${TEST_NAME} PRIVATE Parser SheenBidi)
+    target_compile_options(${TEST_NAME} PRIVATE ${COVERAGE_OPTIONS})
+    target_link_libraries(${TEST_NAME} PRIVATE Parser)
+    target_link_options(${TEST_NAME} PRIVATE ${COVERAGE_OPTIONS})
     add_sanitizers(${TEST_NAME})
 
     add_test(
@@ -272,15 +287,6 @@ if(BUILD_TESTS)
       FAIL_REGULAR_EXPRESSION "[1-9][0-9]* error"
     )
   endforeach()
-
-  if(ENABLE_COVERAGE)
-    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-      message(WARNING "Code coverage is not supported with MSVC")
-    else()
-      target_compile_options(SheenBidi PUBLIC --coverage -fprofile-update=atomic)
-      target_link_options(SheenBidi PUBLIC --coverage)
-    endif()
-  endif()
 endif()
 
 # ------------------------------------------------------------------------------
